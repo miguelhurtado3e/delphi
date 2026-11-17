@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delphi</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1d2433;--mut:#5d6779;--line:#d9dee8;--pri:#1f5fbf;--pri2:#e6efff;--ok:#1a7f4b;--okbg:#e3f5ea;--mid:#9a6a00;--midbg:#fff3d6;--bad:#b3261e;--badbg:#fde7e5;--cut:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#12161f;--card:#1b2130;--ink:#e8ecf4;--mut:#9aa6bb;--line:#2e384d;--pri:#6ea0ff;--pri2:#223253;--ok:#5fd19a;--okbg:#17352a;--mid:#f0c35a;--midbg:#3a3015;--bad:#ff8a80;--badbg:#3d1d1b;--cut:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+header{padding:16px 20px;background:var(--card);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+header h1{font-size:18px;margin:0}header small{color:var(--mut);display:block;font-weight:400}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--pri)}button.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+button.sm{padding:2px 8px}
+nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--line);background:var(--card)}
+nav button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px}
+nav button.on{border-bottom-color:var(--pri);color:var(--pri);font-weight:600}
+main{padding:18px 20px;max-width:1300px;margin:auto}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 6px}.card h3{font-size:14px;margin:12px 0 6px}
+.mut{color:var(--mut)}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px}
+th,td{border:1px solid var(--line);padding:3px 6px;text-align:center;white-space:nowrap}
+th{background:var(--pri2)}td.l,th.l{text-align:left;white-space:normal}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+input[type=number]{width:64px}td input[type=text]{width:140px}
+textarea{width:100%;min-height:60px}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.Alto{background:var(--okbg);color:var(--ok)}.Medio{background:var(--midbg);color:var(--mid)}.Bajo{background:var(--badbg);color:var(--bad)}
+.bar{display:inline-block;height:10px;background:var(--pri);border-radius:5px;vertical-align:middle}
+.note{background:var(--pri2);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
+.warn{background:var(--midbg);color:var(--ink)}
+.good{background:var(--okbg)}
+svg text{fill:var(--ink);font-size:12px}
+details{margin:8px 0}summary{cursor:pointer;color:var(--pri)}
+.q{border-left:3px solid var(--pri);padding-left:10px;margin:12px 0}
+.rep h1{font-size:22px;margin:0 0 4px}.rep h2{font-size:17px;margin:22px 0 6px;border-bottom:2px solid var(--pri);padding-bottom:3px}
+.rep p{margin:6px 0}
+@media print{
+ :root{--bg:#fff;--card:#fff;--ink:#000;--mut:#444;--line:#999;--pri:#1f5fbf;--pri2:#e6efff;--ok:#1a7f4b;--okbg:#e3f5ea;--mid:#9a6a00;--midbg:#fff3d6;--bad:#b3261e;--badbg:#fde7e5;--cut:#c0392b}
+ header,nav,.noprint{display:none!important}
+ main{padding:0;max-width:none}
+ .card{border:none;padding:0 0 8px}
+ table{font-size:10px}th,td{padding:2px 4px}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .rep h2{break-after:avoid}svg,tr{break-inside:avoid}
+ @page{margin:14mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Delphi<small>Modelo de Thorgenson (inversa de la normal) · Doctorado en Educación Matemática, UAN</small></h1>
+  <div class="btns">
+    <span id="modo"></span>
+    <button class="pri" id="btnDemo" onclick="demoCompleta()">Cargar demostración completa</button>
+    <button onclick="exportar()">Exportar JSON</button>
+    <button onclick="document.getElementById('imp').click()">Importar JSON</button>
+    <input id="imp" type="file" accept=".json" hidden onchange="importar(this)">
+    <button onclick="reiniciar()">Reiniciar todo</button>
+  </div>
+</header>
+<nav id="tabs"></nav>
+<main>
+<section id="t-k"></section>
+<section id="t-enc"></section>
+<section id="t-ent"></section>
+<section id="t-ron"></section>
+<section id="t-ver"></section>
+<section id="t-inf"></section>
+</main>
+
+<script>
+// ============================ MOTOR (probado con las tablas del profesor) ============================
+//<ENGINE>
+const Z_MAX = 4.09;
+function invNorm(p){
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pl=0.02425, ph=1-pl; let q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p>ph){q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  q=p-0.5;r=q*q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+function zOf(p){ if(p<=0) return -Z_MAX; if(p>=1) return Z_MAX; return Math.max(-Z_MAX, Math.min(Z_MAX, invNorm(p))); }
+const sumArr = a => a.reduce((s,x)=>s+x,0);
+// rows: [{code, counts:[n por categoria, de la mejor a la peor]}], K = numero de categorias
+function thorgenson(rows, K){
+  const valid = rows.filter(r => sumArr(r.counts) > 0);
+  const res = valid.map(r=>{
+    const n = sumArr(r.counts); let acc = 0;
+    const cum = r.counts.map(c => (acc += c));
+    const rel = cum.map(c => c/n);
+    const z = rel.map(zOf);
+    const suma = sumArr(z);
+    return {code:r.code, counts:r.counts, n, cum, rel, z, suma, prm: suma/K};
+  });
+  const m = res.length;
+  const cuts = Array.from({length:K}, (_,k) => m ? sumArr(res.map(r=>r.z[k]))/m : 0);
+  const colSums = Array.from({length:K}, (_,k) => sumArr(res.map(r=>r.z[k])));
+  const N = m ? sumArr(res.map(r=>r.prm))/m : 0;
+  res.forEach(r=>{
+    r.np = N - r.prm;
+    r.cat = K-1;
+    for(let k=0;k<K-1;k++){ if(r.np < cuts[k]){ r.cat = k; break; } }
+  });
+  return {rows:res, cuts, colSums, N, K, skipped: rows.length - m};
+}
+//</ENGINE>
+
+// ============================ CONSTANTES ============================
+const LIK = [{k:'S',t:'Siempre',v:5},{k:'CS',t:'Casi siempre',v:4},{k:'AV',t:'Algunas veces',v:3},{k:'RV',t:'Rara vez',v:2},{k:'NU',t:'Nunca',v:1}];
+const VAL = [{k:'MA',t:'Muy adecuado'},{k:'BA',t:'Bastante adecuado'},{k:'A',t:'Adecuado'},{k:'PA',t:'Poco adecuado'},{k:'I',t:'Inadecuado'}];
+const SRC = [
+  {k:'teo',t:'Análisis teóricos realizados por él',w:{A:.3,M:.2,B:.1}},
+  {k:'exp',t:'Su propia experiencia',w:{A:.5,M:.4,B:.2}},
+  {k:'nac',t:'Trabajos de autores nacionales',w:{A:.05,M:.05,B:.05}},
+  {k:'ext',t:'Trabajos de autores extranjeros',w:{A:.05,M:.05,B:.05}},
+  {k:'est',t:'Conocimiento del estado del problema en el extranjero',w:{A:.05,M:.05,B:.05}},
+  {k:'int',t:'Su intuición',w:{A:.05,M:.05,B:.05}}
+];
+const ITEMS = [
+ 'Propone situaciones o simulaciones de fenómenos reales para que los estudiantes extraigan y organicen los datos antes de encontrar una regla.',
+ 'Los estudiantes identifican patrones, secuencias o regularidades a partir de un fenómeno o simulación.',
+ 'Los estudiantes abstraen las variables relevantes de un problema sin depender de que el docente se las indique.',
+ 'Propongo actividades donde los estudiantes construyen o traducen la regla general/función a partir de los datos observados.',
+ 'Mis estudiantes pasan con fluidez del registro tabular/gráfico al algebraico f(x) sin recetas memorizadas.',
+ 'Se observa una transición del cálculo aritmético punto a punto hacia la comprensión estructural de la función.',
+ 'Anima a evaluar ("saturar") la función hallada reemplazando valores particulares.',
+ 'Los estudiantes tienen estrategias propias para comprobar el valor de verdad de sus resultados sin validación inmediata del docente.',
+ 'Los estudiantes comunican y argumentan ante el grupo los pasos seguidos para validar la función.',
+ 'Utilizo aplicativos web, software interactivo o simulaciones digitales para que el estudiante explore y modele conceptos.'
+];
+const QS = [
+ 'Concepción de la comprensión robusta y tránsito de sentidos',
+ 'Obstáculos en el proceso de abstracción',
+ 'Retos didácticos en la formulación de la función',
+ 'Estrategias para la valoración y saturación de verdad',
+ 'Mediación tecnológica e interacción con aplicativos web',
+ 'Recomendaciones para la evaluación del modelo'
+];
+const BANK = [
+ [['Movilidad de registros','Se requiere moverse con soltura entre los registros tabular, gráfico y algebraico.'],['Construcción de sentido','El estudiante debe construir el sentido del concepto antes de aplicar el algoritmo.'],['Invariantes','La comprensión robusta se reconoce cuando se identifican los invariantes del fenómeno.'],['Tareas abiertas','Se logra con tareas abiertas y problemas no rutinarios.'],['Autonomía','Implica reflexión y autonomía del estudiante sobre su propio proceso.']],
+ [['Selección de variables','A los estudiantes les cuesta distinguir cuáles variables son relevantes.'],['Dependencia del docente','Esperan que el docente les indique qué datos mirar.'],['Lectura superficial','Hacen una lectura superficial de gráficas y simulaciones.'],['Sobrecarga visual','La sobrecarga de información visual distrae de lo esencial.'],['Lenguaje matemático','El lenguaje matemático y los signos todavía son débiles.']],
+ [['Generalización','El salto de lo empírico a lo general es la mayor dificultad.'],['Notación algebraica','Se bloquean con la notación algebraica y el uso de parámetros.'],['Cálculo punto a punto','Prevalece el cálculo punto a punto sobre la regla general.'],['Función como objeto','Conciben la función como proceso y no como objeto.'],['Patrones implícitos','Los patrones no son explícitos en los datos que se les presentan.']],
+ [['Saturación con casos','Verificar la fórmula con casos particulares (saturación) fomenta la autonomía.'],['Contraejemplos','El uso de contraejemplos y conjeturas ayuda a juzgar la validez.'],['Rúbricas de autoevaluación','Las rúbricas de autoevaluación guiada son útiles.'],['Retroalimentación del entorno','El entorno digital puede dar retroalimentación inmediata sin el docente.'],['Argumentación entre pares','La discusión argumentativa entre pares consolida el valor de verdad.']],
+ [['Interactividad','El aplicativo debe permitir manipulación directa e interactividad.'],['Retroalimentación inmediata','Debe ofrecer retroalimentación inmediata y no solo correcto/incorrecto.'],['Representaciones múltiples','Debe enlazar representaciones múltiples en simultáneo.'],['Andamiaje progresivo','Debe ofrecer ayudas graduadas, con andamiaje que se retira progresivamente.'],['Registro de exploración','Debe registrar la exploración del estudiante para analizarla después.']],
+ [['Diseño pre-post','Se recomienda un diseño cuasiexperimental con pre-test y post-test.'],['Rúbricas A-F-V','Usar rúbricas de los procesos Abstraer, Formular y Valorar.'],['Triangulación','Triangular instrumentos: observación, producciones y entrevistas.'],['Producciones de estudiantes','Analizar las producciones escritas y digitales de los estudiantes.'],['Juicio de expertos','Validar el modelo por juicio de expertos (Delphi).']]
+];
+function oldIndicators(){ return [
+ ['A1','Abstraer','Identifica datos e invariantes de un fenómeno o simulación.'],
+ ['A2','Abstraer','Reconoce patrones y regularidades a partir de la observación.'],
+ ['A3','Abstraer','Selecciona las variables relevantes sin indicación explícita del docente.'],
+ ['B1','Formular','Organiza los datos en registros tabular y gráfico.'],
+ ['B2','Formular','Transita del registro tabular/gráfico al algebraico.'],
+ ['B3','Formular','Construye la regla general o función (comprensión estructural).'],
+ ['C1','Valorar','Satura la función con valores particulares.'],
+ ['C2','Valorar','Juzga el valor de verdad de su resultado de forma autónoma.'],
+ ['C3','Valorar','Argumenta y comunica la validación ante el grupo.'],
+ ['D1','Mediación tecnológica','El aplicativo permite explorar y manipular de forma interactiva.'],
+ ['D2','Mediación tecnológica','El aplicativo da retroalimentación inmediata y andamiaje progresivo.'],
+ ['E1','Evaluación del modelo','Instrumentos para evaluar el impacto (pre-post, rúbricas A-F-V).'],
+ ['E2','Evaluación del modelo','Evidencias de transferencia y autonomía del estudiante.']
+].map(x=>({code:x[0],factor:x[1],text:x[2]})); }
+
+// Indicadores del modelo didáctico de Comprensión Robusta Matemática (funciones, educación media, aplicativos web)
+function defaultIndicators(){ return [
+ ['A1','Abstraer el argumento','Aísla los datos y variables relevantes de un fenómeno o simulación, distinguiéndolos de la información accesoria.'],
+ ['A2','Abstraer el argumento','Identifica invariantes, patrones y regularidades en la covariación de las magnitudes observadas.'],
+ ['A3','Abstraer el argumento','Caracteriza el argumento del concepto (qué varía y de qué depende) sin que el docente se lo indique.'],
+ ['B1','Formular la función','Organiza los datos en registros tabular y gráfico para evidenciar la relación entre argumento y valor.'],
+ ['B2','Formular la función','Traduce la relación observada al registro algebraico f(x), sin recurrir a recetas memorizadas.'],
+ ['B3','Formular la función','Reconoce la función como la ley subyacente al fenómeno (comprensión estructural, no cálculo punto a punto).'],
+ ['C1','Valorar la referencia','Satura la función: reemplaza el argumento por valores particulares y obtiene el valor correspondiente.'],
+ ['C2','Valorar la referencia','Contrasta el valor obtenido con el fenómeno y juzga su valor de verdad de forma autónoma.'],
+ ['C3','Valorar la referencia','Argumenta y comunica ante el grupo la validez y coherencia de la función hallada.'],
+ ['D1','Mediación tecnológica','El aplicativo web permite explorar y manipular el fenómeno de forma interactiva (simulación).'],
+ ['D2','Mediación tecnológica','El aplicativo ofrece retroalimentación inmediata y andamiaje graduado para transitar entre Abstraer, Formular y Valorar.'],
+ ['E1','Comprensión robusta y evaluación','El estudiante transita de forma reflexiva entre sentidos y registros del concepto, trascendiendo la ejecución algorítmica.'],
+ ['E2','Comprensión robusta y evaluación','El modelo cuenta con criterios e instrumentos para evaluar el avance (diagnóstico de fortalezas y dificultades, rúbricas por proceso).']
+].map(x=>({code:x[0],factor:x[1],text:x[2]})); }
+// Si el usuario conserva la propuesta anterior sin editarla, se actualiza sola a la nueva
+function migrarInd(){ try{ if(S.indVer!==2){ if(JSON.stringify(S.indicators)===JSON.stringify(oldIndicators())) S.indicators=defaultIndicators(); S.indVer=2; } }catch(e){} }
+
+// ============================ ESTADO ============================
+const KEY='multicrea_delphi_v1';
+function nuevoEstado(){ return {mode:'real',experts:[],teachers:[],interviews:{},indicators:defaultIndicators(),rounds:[{ratings:{}}],cur:0,selExp:'',cfg:{altoMin:0.8,medioMin:0.7,onlyAM:true,codeThr:60,level:'alto',repTitle:'Informe de resultados del método Delphi',repAuthor:'',repSim:true}}; }
+let S = nuevoEstado();
+// Datos guardados antes de existir el modo: se consideran simulados salvo que el informe ya estuviera desmarcado como simulado
+function modoDe(P){ return P.mode==='sim'||P.mode==='real' ? P.mode : ((P.cfg&&P.cfg.repSim===false)?'real':'sim'); }
+const esSim=()=>S.mode==='sim';
+try{ const raw=localStorage.getItem(KEY); if(raw){ const P=JSON.parse(raw); S=Object.assign(nuevoEstado(),P); S.cfg=Object.assign(nuevoEstado().cfg,S.cfg); S.mode=modoDe(P); } }catch(e){}
+migrarInd();
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function renderAll(){ renderModo(); renderK(); renderEnc(); renderEnt(); renderRon(); renderVer(); renderInf(); save(); }
+// ---- Modo: simulación (datos generados) o datos reales (capturados a mano). Nunca se mezclan. ----
+let QUIET=false;
+function ovw(hay,msg){ return QUIET||!hay||confirm(msg+'\n\n¿Continuar?'); }
+function hayDatos(){ return S.experts.length>0||S.teachers.length>0||Object.keys(S.interviews).length>0||S.rounds.some(r=>Object.keys(r.ratings).length>0); }
+function setMode(m){ if(m===S.mode) return;
+  if(hayDatos()){ if(!confirm('Al cambiar a '+(m==='sim'?'MODO SIMULACIÓN':'MODO DATOS REALES')+' se borran los datos actuales, para no mezclar datos simulados con reales. Antes se descargará una copia JSON.\n\n¿Continuar?')) return; exportar(); }
+  const keep={indicators:S.indicators,indVer:S.indVer,cfg:S.cfg}; S=nuevoEstado(); S.indicators=keep.indicators; S.indVer=keep.indVer; S.cfg=keep.cfg; S.mode=m; renderAll(); goTab('t-k'); }
+function renderModo(){ const sim=esSim();
+  $('modo').innerHTML=`<span class="tag ${sim?'Medio':'Alto'}" title="${sim?'Los datos se generan al azar para ensayar el procedimiento':'Los datos los digitas tú a partir de respuestas reales'}">${sim?'Modo simulación':'Modo datos reales'}</span> <button onclick="setMode('${sim?'real':'sim'}')">Cambiar a ${sim?'datos reales':'simulación'}</button>`;
+  $('btnDemo').style.display=sim?'':'none'; }
+
+// ============================ UTILIDADES ============================
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f2=x=>(Math.round(x*100)/100).toFixed(2);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function gauss(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+const MU={alto:4.4,medio:3.5,bajo:2.5};
+function sel(opts,val,handler,blank){ return `<select onchange="${handler}">${blank?'<option value=""></option>':''}${opts.map(o=>`<option value="${esc(o[0])}"${String(o[0])===String(val)?' selected':''}>${esc(o[1])}</option>`).join('')}</select>`; }
+function sampleLikert(mu){ return Math.max(1,Math.min(5,Math.round(mu+gauss()*0.8))); }
+
+// ============================ TABS ============================
+const TABS=[['t-k','1 · Panel de expertos (K)'],['t-enc','2 · Encuesta a docentes'],['t-ent','3 · Entrevista a expertos'],['t-ron','4 · Indicadores y rondas'],['t-ver','5 · Verificación del motor'],['t-inf','6 · Informe de resultados']];
+$('tabs').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="goTab('${t[0]}')">${t[1]}</button>`).join('');
+function goTab(id){ document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on',s.id===id)); document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===id)); try{sessionStorage.setItem('tab',id);}catch(e){} }
+
+// ============================ VISTA DE RESULTADOS THORGENSON ============================
+function resultHTML(res, labels, opts){
+  opts=opts||{}; const K=res.K; const names=labels.map(l=>l.k);
+  if(!res.rows.length) return '<p class="mut">Aún no hay datos para calcular.</p>';
+  const head=`<tr><th class="l">${opts.rowName||'Ítem'}</th>${names.map(n=>`<th>${n}</th>`).join('')}<th>Suma</th><th>Prm</th><th>N − Prm</th><th>Categoría</th></tr>`;
+  const body=res.rows.map(r=>`<tr><td class="l"><b>${esc(r.code)}</b></td>${r.z.map(z=>`<td>${f2(z)}</td>`).join('')}<td>${f2(r.suma)}</td><td>${f2(r.prm)}</td><td>${f2(r.np)}</td><td><b>${labels[r.cat].k}</b></td></tr>`).join('');
+  const foot=`<tr><th class="l">Suma</th>${res.colSums.map(x=>`<th>${f2(x)}</th>`).join('')}<th>${f2(sumArr(res.rows.map(r=>r.suma)))}</th><th>${f2(sumArr(res.rows.map(r=>r.prm)))}</th><th></th><th></th></tr>
+  <tr><th class="l">Puntos de corte</th>${res.cuts.map(x=>`<th style="color:var(--cut)">${f2(x)}</th>`).join('')}<th></th><th>÷ ${res.rows.length} = ${f2(res.N)}</th><th></th><th></th></tr>`;
+  const cnt=`<tr><th class="l">${opts.rowName||'Ítem'}</th><th>n</th>${names.map(n=>`<th>${n}</th>`).join('')}<th></th>${names.map(n=>`<th>${n} acum.</th>`).join('')}<th></th>${names.map(n=>`<th>${n} rel. acum.</th>`).join('')}</tr>` +
+    res.rows.map(r=>`<tr><td class="l"><b>${esc(r.code)}</b></td><td>${r.n}</td>${r.counts.map(c=>`<td>${c}</td>`).join('')}<td></td>${r.cum.map(c=>`<td>${c}</td>`).join('')}<td></td>${r.rel.map(c=>`<td>${f2(c)}</td>`).join('')}</tr>`).join('');
+  const repCnt=`<h3>Frecuencias absolutas</h3><table><tr><th class="l">${opts.rowName||'Ítem'}</th><th>n</th>${names.map(n=>`<th>${n}</th>`).join('')}</tr>${res.rows.map(r=>`<tr><td class="l"><b>${esc(r.code)}</b></td><td>${r.n}</td>${r.counts.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+  return `${opts.report?repCnt:`<details><summary>Ver frecuencias absolutas, acumuladas y relativas acumuladas</summary><div class="scroll"><table>${cnt}</table></div></details>`}
+  <h3>Función recíproca de la distribución normal y puntos de corte</h3>
+  <div class="scroll"><table>${head}${body}${foot}</table></div>
+  <p class="mut" style="font-size:12px">Los valores 0 y 1 de la frecuencia relativa acumulada se truncan en ∓${Z_MAX}. Un ítem pertenece a la primera categoría cuyo punto de corte supera su valor N − Prm. N = promedio de los Prm.${res.skipped?` Se omitieron ${res.skipped} ítems sin respuestas.`:''}</p>
+  ${lineSVG(res,labels)}
+  ${analysisText(res,labels,opts)}`;
+}
+function lineSVG(res,labels){
+  const K=res.K, W=900, H=210, padL=30, padR=30, base=150;
+  const finite=res.cuts.slice(0,K-1).filter(c=>c<Z_MAX-0.005);
+  const vals=res.rows.map(r=>r.np).concat(finite);
+  let lo=Math.min(...vals)-0.6, hi=Math.max(...vals)+0.6; if(hi-lo<2){hi=lo+2;}
+  const X=v=>padL+(v-lo)/(hi-lo)*(W-padL-padR);
+  const bounds=[lo].concat(res.cuts.slice(0,K-1).map(c=>Math.min(Math.max(c,lo),hi))).concat([hi]);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" role="img" aria-label="Recta con puntos de corte e indicadores">`;
+  const tints=['#2e7d3225','#1f5fbf22','#f0c35a30','#e67e2230','#c0392b25'];
+  for(let k=0;k<K;k++){ const a=X(bounds[k]), b=X(bounds[k+1]); if(b-a<1) continue; s+=`<rect x="${a}" y="30" width="${b-a}" height="${base-30}" fill="${tints[k]}"/><text x="${(a+b)/2}" y="22" text-anchor="middle" style="font-weight:600">${labels[k].k}</text>`; }
+  s+=`<line x1="${padL}" y1="${base}" x2="${W-padR}" y2="${base}" stroke="currentColor" stroke-opacity=".6"/>`;
+  for(let t=Math.ceil(lo);t<=hi;t++){ s+=`<line x1="${X(t)}" y1="${base-3}" x2="${X(t)}" y2="${base+3}" stroke="currentColor" stroke-opacity=".5"/><text x="${X(t)}" y="${base+17}" text-anchor="middle" style="font-size:11px;fill:var(--mut)">${t}</text>`; }
+  res.cuts.slice(0,K-1).forEach((c,i)=>{ if(c<lo||c>hi) return; s+=`<line x1="${X(c)}" y1="30" x2="${X(c)}" y2="${base}" stroke="var(--cut)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${X(c)}" y="${base+34}" text-anchor="middle" style="fill:var(--cut);font-size:11px">P${i+1}=${f2(c)}</text>`; });
+  const pts=res.rows.map(r=>({x:X(r.np),c:r.code,v:r.np})).sort((a,b)=>a.x-b.x); let lvl=0,last=-99;
+  pts.forEach(p=>{ lvl=(p.x-last<22)?lvl+1:0; last=p.x; const y=base-14-lvl*15; s+=`<circle cx="${p.x}" cy="${base}" r="4" fill="var(--pri)"/><text x="${p.x}" y="${y}" text-anchor="middle" style="font-size:11px"><title>${esc(p.c)}: N−Prm = ${f2(p.v)}</title>${esc(p.c)}</text>`; });
+  return s+'</svg>';
+}
+function analysisText(res,labels,opts){
+  const K=res.K, cutTxt=res.cuts.slice(0,K-1).map((c,i)=>`P${i+1} = ${f2(c)}`).join(', ');
+  const groups=labels.map((l,k)=>({l,k,items:res.rows.filter(r=>r.cat===k).map(r=>r.code)})).filter(g=>g.items.length);
+  const top2=res.rows.filter(r=>r.cat<=1).length, m=res.rows.length, pct=Math.round(top2/m*100);
+  const verdict = pct===100 ? 'Hay un buen consenso en su totalidad' : pct>=80 ? 'Hay un buen consenso, casi la totalidad' : pct>=50 ? 'El consenso es parcial; conviene otra ronda' : 'No hay consenso suficiente; se requiere otra ronda';
+  return `<div class="note"><b>Análisis de los resultados.</b> De acuerdo con los puntos de corte (${cutTxt}) y con N = ${f2(res.N)}, ${groups.map(g=>`${g.items.length>1?'los ítems':'el ítem'} <b>${g.items.join(', ')}</b> ${g.items.length>1?'se ubican':'se ubica'} en el intervalo «${g.l.t}» (${g.l.k})`).join('; ')}. ${m?`${top2} de ${m} (${pct} %) quedan en las dos primeras categorías. `:''}<b>${verdict}.</b></div>`;
+}
+
+// ============================ 1 · PANEL DE EXPERTOS ============================
+function calcK(e){ const kc=(+e.kc||0)/10; const ka=SRC.reduce((s,x)=>s+x.w[e.src[x.k]||'M'],0); const K=Math.round(((kc+ka)/2)*100)/100; const c=S.cfg; const cat=K>=c.altoMin-1e-9?'Alto':K>=c.medioMin-1e-9?'Medio':'Bajo'; return {kc,ka,K,cat}; }
+function includedExperts(){ return S.experts.filter(e=>!S.cfg.onlyAM||calcK(e).cat!=='Bajo'); }
+function nuevoExperto(){ const n=S.experts.length+1; return {id:'E'+n,name:'Experto '+n,kc:7,src:{teo:'M',exp:'M',nac:'M',ext:'M',est:'M',int:'M'}}; }
+function addExpert(){ S.experts.push(nuevoExperto()); renderAll(); }
+function delExpert(i){ const id=S.experts[i].id; S.experts.splice(i,1); delete S.interviews[id]; S.rounds.forEach(r=>delete r.ratings[id]); renderAll(); }
+function setE(i,k,v){ S.experts[i][k]=v; renderAll(); }
+function setSrc(i,k,v){ S.experts[i].src[k]=v; renderAll(); }
+function setCfg(k,v){ S.cfg[k]=v; renderAll(); }
+function genExperts(){ if(!esSim()) return; if(!ovw(S.experts.length||Object.keys(S.interviews).length,'Esto reemplaza el panel de expertos, las entrevistas y las rondas.')) return; const n=+$('nExp').value||15; S.experts=[]; S.interviews={}; S.rounds=[{ratings:{}}]; S.cur=0;
+  for(let i=0;i<n;i++){ const e=nuevoExperto(); e.id='E'+(i+1); e.name='Experto '+(i+1); e.kc=10-Math.floor(Math.pow(Math.random(),1.6)*6); const p=rnd(.3,.9);
+    SRC.forEach(s=>{ const r=Math.random(); e.src[s.k]= r<p?'A':(r<p+(1-p)*.6?'M':'B'); }); S.experts.push(e); }
+  renderAll(); }
+function renderK(){
+  const c=S.cfg, cnt={Alto:0,Medio:0,Bajo:0}; S.experts.forEach(e=>cnt[calcK(e).cat]++);
+  const rows=S.experts.map((e,i)=>{ const k=calcK(e); return `<tr><td>${esc(e.id)}</td><td><input type="text" value="${esc(e.name)}" onchange="setE(${i},'name',this.value)"></td>
+   <td><input type="number" min="0" max="10" step="1" value="${e.kc}" onchange="setE(${i},'kc',Math.max(0,Math.min(10,+this.value)))"></td>
+   ${SRC.map(s=>`<td>${sel([['A','A'],['M','M'],['B','B']],e.src[s.k],`setSrc(${i},'${s.k}',this.value)`)}</td>`).join('')}
+   <td>${f2(k.kc)}</td><td>${f2(k.ka)}</td><td><b>${f2(k.K)}</b></td><td><span class="tag ${k.cat}">${k.cat}</span></td><td><button class="sm" onclick="delExpert(${i})" title="Quitar">✕</button></td></tr>`; }).join('');
+  $('t-k').innerHTML=`<div class="card"><h2>Selección de expertos: coeficiente de competencia</h2>
+  <p class="mut">Cada experto se autoevalúa (Kc: 0–10, se multiplica por 0,1) y marca el grado de influencia (A alto, M medio, B bajo) de seis fuentes de argumentación, cuya suma es el coeficiente de argumentación Ka. <b>K = (Kc + Ka) / 2.</b></p>
+  <div class="row"><button class="pri" onclick="addExpert()">+ Añadir experto</button>${esSim()?` Generar <input id="nExp" type="number" min="1" max="60" value="${S.experts.length||15}"> expertos al azar <button onclick="genExperts()">Generar</button>`:''}</div>
+  <div class="row">Categorías: Alto si K ≥ <input type="number" step="0.05" min="0" max="1" value="${c.altoMin}" onchange="setCfg('altoMin',+this.value)"> · Medio si K ≥ <input type="number" step="0.05" min="0" max="1" value="${c.medioMin}" onchange="setCfg('medioMin',+this.value)"> · Bajo si es menor.
+   <label><input type="checkbox" ${c.onlyAM?'checked':''} onchange="setCfg('onlyAM',this.checked)"> Solo Alto y Medio participan en las rondas</label></div>
+  <div class="note warn">Los umbrales por defecto (0,8 y 0,7) reproducen la tabla de tu profesor (K = 0,7 es Medio; 0,6 y 0,5 son Bajo). Algunos textos usan 0,5 como límite entre Medio y Bajo; puedes ajustarlo aquí.</div>
+  <div class="scroll"><table><tr><th>ID</th><th>Nombre</th><th>Kc (0–10)</th>${SRC.map(s=>`<th title="${esc(s.t)}">${esc(s.t.length>22?s.t.slice(0,20)+'…':s.t)}</th>`).join('')}<th>Kc</th><th>Ka</th><th>K</th><th>Categoría</th><th></th></tr>${rows||`<tr><td colspan="14" class="mut">Sin expertos. ${esSim()?'Añade uno o genera un panel aleatorio.':'Añade a cada experto con sus respuestas reales.'}</td></tr>`}</table></div>
+  <p>Alto: <span class="tag Alto">${cnt.Alto}</span> · Medio: <span class="tag Medio">${cnt.Medio}</span> · Bajo: <span class="tag Bajo">${cnt.Bajo}</span> · Participan en las rondas: <b>${includedExperts().length}</b> de ${S.experts.length}</p></div>`;
+}
+
+// ============================ 2 · ENCUESTA A DOCENTES ============================
+function addTeacher(){ S.teachers.push({id:'D'+(S.teachers.length+1),a:Array(10).fill(0)}); renderAll(); }
+function delTeacher(i){ S.teachers.splice(i,1); renderAll(); }
+function setT(i,j,v){ S.teachers[i].a[j]=+v; renderAll(); }
+function genTeachers(){ if(!esSim()) return; if(!ovw(S.teachers.length,'Esto reemplaza las respuestas de la encuesta a docentes.')) return; const n=Math.max(1,+$('nDoc').value||10), lv=$('lvDoc').value; const bias=ITEMS.map(()=>rnd(-.6,.5)); S.teachers=[];
+  for(let i=0;i<n;i++) S.teachers.push({id:'D'+(i+1),a:ITEMS.map((_,j)=>sampleLikert(MU[lv]+bias[j]))}); renderAll(); }
+function surveyResult(){ const rows=ITEMS.map((_,j)=>({code:'P'+(j+1),counts:LIK.map(l=>S.teachers.filter(t=>t.a[j]===l.v).length)})); return thorgenson(rows,5); }
+function renderEnc(){
+  const rows=S.teachers.map((t,i)=>`<tr><td>${t.id}</td>${t.a.map((v,j)=>`<td>${sel(LIK.map(l=>[l.v,l.k]),v||'',`setT(${i},${j},this.value)`,true)}</td>`).join('')}<td><button class="sm" onclick="delTeacher(${i})">✕</button></td></tr>`).join('');
+  $('t-enc').innerHTML=`<div class="card"><h2>Encuesta diagnóstica a docentes (escala S=5, CS=4, AV=3, RV=2, NU=1)</h2>
+  <p class="mut">Digita las respuestas de cada docente o genera un grupo simulado. Se aplica el modelo de Thorgenson para ver qué ítems están consensuados.</p>
+  <div class="row"><button class="pri" onclick="addTeacher()">+ Añadir docente</button>${esSim()?` Generar <input id="nDoc" type="number" min="1" max="200" value="${S.teachers.length||10}"> docentes con tendencia
+   <select id="lvDoc"><option value="alto">alta (casi siempre / siempre)</option><option value="medio">media</option><option value="bajo">baja (rara vez / nunca)</option></select> <button onclick="genTeachers()">Generar</button>`:''}</div>
+  <div class="scroll"><table><tr><th>ID</th>${ITEMS.map((_,j)=>`<th title="${esc(ITEMS[j])}">P${j+1}</th>`).join('')}<th></th></tr>${rows||'<tr><td colspan="12" class="mut">Sin respuestas todavía.</td></tr>'}</table></div>
+  <details><summary>Ver el texto de los 10 ítems</summary><ol>${ITEMS.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></details></div>
+  <div class="card"><h2>Resultado (n = ${S.teachers.length})</h2>${resultHTML(surveyResult(),LIK,{rowName:'Ítem'})}</div>`;
+}
+
+// ============================ 3 · ENTREVISTA A EXPERTOS ============================
+function getInt(id){ return S.interviews[id]||(S.interviews[id]=QS.map(()=>({text:'',codes:''}))); }
+function setInt(id,q,k,v){ getInt(id)[q][k]=v; save(); if(k==='codes') renderEnt(); }
+function selExp(v){ S.selExp=v; renderEnt(); }
+function genInterviews(){ if(!esSim()) return; if(!S.experts.length){ alert('Primero crea el panel de expertos (pestaña 1).'); return; }
+  if(!ovw(Object.keys(S.interviews).length,'Esto reemplaza las entrevistas registradas.')) return;
+  S.experts.forEach(e=>{ const arr=QS.map((_,q)=>{ const w=[.92,.85,.65,.45,.35]; let ch=BANK[q].filter((_,i)=>Math.random()<w[i]); while(ch.length<2) ch=BANK[q].filter(()=>Math.random()<.6); return {text:ch.map(c=>c[1]).join(' '),codes:ch.map(c=>c[0]).join(', ')}; }); S.interviews[e.id]=arr; }); renderAll(); }
+function parseCodes(s){ return String(s||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean); }
+function renderEnt(){
+  if(!S.experts.length){ $('t-ent').innerHTML='<div class="card"><h2>Entrevista semiestructurada</h2><p class="mut">Crea primero el panel de expertos (pestaña 1).</p></div>'; return; }
+  if(!S.experts.find(e=>e.id===S.selExp)) S.selExp=S.experts[0].id;
+  const iv=getInt(S.selExp);
+  const blocks=QS.map((q,i)=>`<div class="q"><b>${i+1}. ${esc(q)}</b>
+   <textarea placeholder="Respuesta del experto…" onchange="setInt('${S.selExp}',${i},'text',this.value)">${esc(iv[i].text)}</textarea>
+   <div class="row">Códigos / categorías (separados por coma): <input type="text" style="flex:1;min-width:240px" value="${esc(iv[i].codes)}" onchange="setInt('${S.selExp}',${i},'codes',this.value)"></div></div>`).join('');
+  const N=S.experts.length, thr=S.cfg.codeThr;
+  const summ=QS.map((q,i)=>{ const f={}; let resp=0; S.experts.forEach(e=>{ const cs=[...new Set(parseCodes((S.interviews[e.id]||[])[i]?.codes))]; if(cs.length) resp++; cs.forEach(c=>f[c]=(f[c]||0)+1); });
+    const list=Object.entries(f).sort((a,b)=>b[1]-a[1]);
+    return `<details ${i===0?'open':''}><summary>${i+1}. ${esc(q)} — ${resp} entrevistas codificadas</summary><table><tr><th class="l">Código</th><th>Expertos</th><th>%</th><th></th><th>¿Consensuado?</th></tr>${list.map(([c,n])=>{ const p=Math.round(n/N*100); return `<tr><td class="l">${esc(c)}</td><td>${n}</td><td>${p}</td><td class="l"><span class="bar" style="width:${p*1.5}px"></span></td><td>${p>=thr?'<span class="tag Alto">Sí</span>':'<span class="tag Bajo">No</span>'}</td></tr>`; }).join('')||'<tr><td colspan="5" class="mut">Sin códigos todavía.</td></tr>'}</table></details>`; }).join('');
+  $('t-ent').innerHTML=`<div class="card"><h2>Entrevista semiestructurada a expertos (6 preguntas)</h2>
+  <p class="mut">Registra la respuesta de cada experto y codifícala. Los códigos que superen el umbral de coincidencia son candidatos a indicadores para la ronda de validación (pestaña 4).</p>
+  <div class="row">${esSim()?'<button class="pri" onclick="genInterviews()">Generar entrevistas simuladas para todos los expertos</button>':''}
+   Experto: ${sel(S.experts.map(e=>[e.id,e.id+' · '+e.name]),S.selExp,'selExp(this.value)')}</div>${blocks}</div>
+  <div class="card"><h2>Síntesis cualitativa de la entrevista</h2><div class="row">Umbral de coincidencia: <input type="number" min="10" max="100" step="5" value="${thr}" onchange="setCfg('codeThr',+this.value)"> % de los expertos (n = ${N})</div>${summ}</div>`;
+}
+
+// ============================ 4 · INDICADORES Y RONDAS ============================
+function setInd(i,k,v){ S.indicators[i][k]=v; renderAll(); }
+function addInd(){ S.indicators.push({code:'X'+(S.indicators.length+1),factor:'Nuevo',text:''}); renderAll(); }
+function delInd(i){ const c=S.indicators[i].code; S.indicators.splice(i,1); S.rounds.forEach(r=>Object.values(r.ratings).forEach(o=>delete o[c])); renderAll(); }
+function curR(){ return S.rounds[S.cur]; }
+function setRound(v){ S.cur=+v; renderAll(); }
+function setRate(id,code,v){ const r=curR().ratings; (r[id]=r[id]||{})[code]=v; renderAll(); }
+function genRound(){ if(!esSim()) return; const R=curR(); if(!ovw(Object.keys(R.ratings).length,'Esto reemplaza las valoraciones de la ronda '+(S.cur+1)+'.')) return; const lv=$('lvRon').value; S.cfg.level=lv; const bias=S.indicators.map(()=>rnd(-.6,.5)); R.ratings={};
+  includedExperts().forEach(e=>{ R.ratings[e.id]={}; S.indicators.forEach((ind,j)=>{ R.ratings[e.id][ind.code]=VAL[5-sampleLikert(MU[lv]+bias[j])].k; }); }); renderAll(); }
+function nextRound(conv){ if(conv&&!esSim()) return; const prev=curR(), nr={ratings:{}};
+  if(conv){ const med={}; S.indicators.forEach(ind=>{ const v=Object.values(prev.ratings).map(o=>VAL.findIndex(x=>x.k===o[ind.code])).filter(x=>x>=0).sort((a,b)=>a-b); med[ind.code]=v.length?v[Math.floor(v.length/2)]:0; });
+    Object.entries(prev.ratings).forEach(([id,o])=>{ nr.ratings[id]={}; S.indicators.forEach(ind=>{ let v=VAL.findIndex(x=>x.k===o[ind.code]); if(v<0) return; if(v!==med[ind.code] && Math.random()<.75) v+=Math.sign(med[ind.code]-v); nr.ratings[id][ind.code]=VAL[v].k; }); }); }
+  S.rounds.push(nr); S.cur=S.rounds.length-1; renderAll(); }
+function delRound(){ if(S.rounds.length<2) return; S.rounds.splice(S.cur,1); S.cur=Math.max(0,S.cur-1); renderAll(); }
+function roundResult(R){ const rows=S.indicators.map(ind=>({code:ind.code,counts:VAL.map(v=>Object.values(R.ratings).filter(o=>o[ind.code]===v.k).length)})); return thorgenson(rows,5); }
+function renderRon(){
+  const inc=includedExperts(), R=curR();
+  const indRows=S.indicators.map((x,i)=>`<tr><td><input type="text" style="width:56px" value="${esc(x.code)}" onchange="setInd(${i},'code',this.value.trim())"></td><td><input type="text" value="${esc(x.factor)}" onchange="setInd(${i},'factor',this.value)"></td><td class="l"><input type="text" style="width:100%;min-width:360px" value="${esc(x.text)}" onchange="setInd(${i},'text',this.value)"></td><td><button class="sm" onclick="delInd(${i})">✕</button></td></tr>`).join('');
+  const grid=inc.map(e=>`<tr><td title="${esc(e.name)}">${esc(e.id)}</td>${S.indicators.map(ind=>`<td>${sel(VAL.map(v=>[v.k,v.k]),(R.ratings[e.id]||{})[ind.code]||'',`setRate('${e.id}','${esc(ind.code)}',this.value)`,true)}</td>`).join('')}</tr>`).join('');
+  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=Object.keys(r.ratings).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(c=>`<td>${f2(c)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
+  $('t-ron').innerHTML=`<div class="card"><h2>Indicadores propuestos</h2>
+   <p class="mut">Propuesta para el modelo didáctico de Comprensión Robusta Matemática (funciones, educación media, aplicativos web): 3 indicadores por cada proceso cognoscitivo (Abstraer el argumento, Formular la función, Valorar la referencia), 2 de mediación tecnológica y 2 de comprensión robusta y evaluación del modelo. Edítalos libremente; se recalcula todo.</p>
+   <details><summary>Ver / editar los ${S.indicators.length} indicadores</summary><div class="scroll"><table><tr><th>Código</th><th>Factor</th><th>Descripción</th><th></th></tr>${indRows}</table></div><button onclick="addInd()">+ Añadir indicador</button> <button onclick="resetInd()">Restablecer a la propuesta de mi tesis</button></details></div>
+  <div class="card"><h2>Ronda de validación por expertos (MA, BA, A, PA, I)</h2>
+   <div class="row">Ronda: ${sel(S.rounds.map((_,i)=>[i,'Ronda '+(i+1)]),S.cur,'setRound(this.value)')}
+   ${esSim()?'<button onclick="nextRound(true)" title="Los expertos reconsideran hacia la mediana del grupo">+ Nueva ronda convergente</button> ':''}<button onclick="nextRound(false)">+ Nueva ronda ${esSim()?'vacía':''}</button> <button onclick="delRound()">Eliminar esta ronda</button></div>
+   ${esSim()?`<div class="row">Generar respuestas de esta ronda con tendencia <select id="lvRon"><option value="alto"${S.cfg.level==='alto'?' selected':''}>alta (MA/BA)</option><option value="medio"${S.cfg.level==='medio'?' selected':''}>media</option><option value="bajo"${S.cfg.level==='bajo'?' selected':''}>baja</option></select> <button class="pri" onclick="genRound()">Generar respuestas</button></div>`:''}
+   ${inc.length?'':'<div class="note warn">No hay expertos participantes. Crea el panel en la pestaña 1.</div>'}
+   <div class="scroll"><table><tr><th>Experto</th>${S.indicators.map(x=>`<th title="${esc(x.text)}">${esc(x.code)}</th>`).join('')}</tr>${grid}</table></div></div>
+  <div class="card"><h2>Resultado de la ronda ${S.cur+1} (n = ${Object.keys(R.ratings).length} expertos)</h2>${resultHTML(roundResult(R),VAL,{rowName:'Indicador'})}</div>
+  <div class="card"><h2>Comparación entre rondas</h2><table><tr><th>Ronda</th><th>Expertos</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>N</th><th>Indicadores en MA o BA</th><th>%</th></tr>${comp}</table>
+   <p class="mut">Criterio práctico: se detiene la técnica cuando el consenso se estabiliza entre dos rondas. Confirma con tu profesor el criterio exacto de parada.</p></div>`;
+}
+
+// ============================ 5 · VERIFICACIÓN DEL MOTOR ============================
+const PRESETS={
+ enc:{title:'Ejemplo 1 del profesor: encuesta, 7 preguntas, n = 10 (valores absolutos)',labels:LIK,
+  rows:[['A',[0,5,5,0,0]],['B',[9,1,0,0,0]],['C',[2,4,4,0,0]],['D',[0,8,2,0,0]],['E',[3,5,2,0,0]],['F',[10,0,0,0,0]],['G',[0,4,4,2,0]]],
+  cuts:[-1.17,1.40,3.62,4.09,4.09],N:2.41,np:[0.77,-1.12,0.08,0.61,-0.11,-1.68,-1.47],
+  skip:[6],note:'Diferencias esperadas de ±0,01: la diapositiva muestra z(0,9) = 1,29 (el valor exacto es 1,28) y −8,25/7 = −1,18 como −1,17. Además, la pregunta G aparece con N − Prm = −1,47, pero su Prm es 0,936 y N = 2,41, así que el valor correcto es +1,47 (error de signo en la diapositiva). Ese valor se excluye de la comparación. Con +1,47, G queda en el intervalo AV y no en el primero, a diferencia de lo que dice el texto de la diapositiva.'},
+ exp:{title:'Ejemplo 2 del profesor: 13 indicadores, 27 expertos (valores absolutos)',labels:VAL,
+  rows:[['A1',[10,16,1,0,0]],['A2',[15,11,1,0,0]],['A3',[9,14,4,0,0]],['A4',[18,7,2,0,0]],['B1',[14,11,2,0,0]],['B2',[10,16,1,0,0]],['B3',[10,17,0,0,0]],['B4',[17,9,1,0,0]],['B5',[20,7,0,0,0]],['C1',[16,10,1,0,0]],['C2',[9,14,4,0,0]],['C3',[20,7,0,0,0]],['D1',[18,9,0,0,0]]],
+  cuts:[0.07,2.31,4.09,4.09,4.09],N:2.93,np:[0.19,0.10,0.36,0.08,0.17,0.19,-0.28,0.06,-0.47,0.12,0.36,-0.49,-0.27],
+  note:'La tabla de valores absolutos de la diapositiva no es consistente con su propia tabla de z en cuatro filas (A3, A4, B1 y B3; por ejemplo, B1 suma 25 y B3 suma 28 en vez de 27). Aquí los conteos de esas filas se reconstruyeron a partir de las z de la diapositiva (A3 = 9-14-4, A4 = 18-7-2, B1 = 14-11-2, B3 = 10-17-0). Además hay errores aritméticos en la diapositiva: D1 muestra Prm = 3,20 pero 16,80/5 = 3,36; A4 suma 14,29 y debería ser 14,19; y C1 muestra N − Prm = 0,12 cuando 2,93 − 2,85 = 0,08. Esos tres valores (A4, C1 y D1) se excluyen de la comparación. Por ese arrastre, P2 y N difieren hasta 0,02 y 0,01. B4 (0,06) y C1 (0,08) quedan casi sobre el punto de corte P1 (0,07–0,08), así que su categoría es sensible al redondeo.',skip:[3,9,12]}
+};
+function renderVer(){
+  $('t-ver').innerHTML=`<div class="card"><h2>Verificación del motor de cálculo</h2><p class="mut">Se ejecuta el mismo motor que usan las demás pestañas con los datos de las diapositivas de tu profesor y se compara con los valores que él muestra. Sirve para confiar en el simulador antes de usarlo con datos propios.</p></div>`+
+  Object.entries(PRESETS).map(([key,p])=>{ const res=thorgenson(p.rows.map(r=>({code:r[0],counts:r[1]})),5);
+    const dc=res.cuts.map((c,i)=>Math.abs(c-p.cuts[i])), dn=res.rows.map((r,i)=>(p.skip||[]).includes(i)?0:Math.abs(r.np-p.np[i])), mx=Math.max(...dc,...dn,Math.abs(res.N-p.N));
+    return `<div class="card"><h2>${p.title}</h2>
+    ${esSim()?`<div class="row"><button class="pri" onclick="cargarEjemplo('${key}')">${key==='enc'?'Copiar este ejemplo a la pestaña 2 (encuesta)':'Copiar este ejemplo a la pestaña 4 (rondas)'}</button><span class="mut">El ejemplo original de esta pestaña no se modifica.</span></div>`:'<p class="mut">Copiar este ejemplo a las pestañas de trabajo solo está disponible en modo simulación, para no mezclarlo con datos reales.</p>'}
+    <div class="note ${mx<=0.03?'good':'warn'}"><b>Diferencia máxima con la diapositiva: ${f2(mx)}.</b> ${mx<=0.03?'El motor reproduce los resultados del profesor.':'Hay diferencias que conviene revisar.'}<br>${esc(p.note)}</div>
+    <table><tr><th class="l"></th>${p.labels.map((l,i)=>`<th>P${i+1}</th>`).join('')}<th>N</th></tr>
+    <tr><td class="l">Puntos de corte (diapositiva)</td>${p.cuts.map(x=>`<td>${f2(x)}</td>`).join('')}<td>${f2(p.N)}</td></tr>
+    <tr><td class="l">Puntos de corte (simulador)</td>${res.cuts.map(x=>`<td>${f2(x)}</td>`).join('')}<td>${f2(res.N)}</td></tr></table>
+    <p><b>N − Prm</b> por ítem — diapositiva vs. Delphi:</p><table><tr><th></th>${res.rows.map(r=>`<th>${r.code}</th>`).join('')}</tr><tr><td class="l">Diapositiva</td>${p.np.map(x=>`<td>${f2(x)}</td>`).join('')}</tr><tr><td class="l">Delphi</td>${res.rows.map(r=>`<td>${f2(r.np)}</td>`).join('')}</tr></table>
+    ${resultHTML(res,p.labels,{rowName:'Ítem'})}</div>`; }).join('');
+}
+
+// ============================ 6 · INFORME DE RESULTADOS ============================
+function setRep(k,v){ S.cfg[k]=v; renderAll(); }
+function codeFreq(i){ const f={}; let resp=0; S.experts.forEach(e=>{ const cs=[...new Set(parseCodes((S.interviews[e.id]||[])[i]?.codes))]; if(cs.length) resp++; cs.forEach(c=>f[c]=(f[c]||0)+1); }); return {resp,list:Object.entries(f).sort((a,b)=>b[1]-a[1])}; }
+function renderInf(){
+  const c=S.cfg, inc=includedExperts(), N=S.experts.length, nT=S.teachers.length;
+  const hoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const cnt={Alto:0,Medio:0,Bajo:0}; S.experts.forEach(e=>cnt[calcK(e).cat]++);
+  const hayR=S.rounds.some(r=>Object.keys(r.ratings).length);
+  const L=S.rounds.length-1, resL=roundResult(S.rounds[L]);
+  const resE=surveyResult();
+  // 2. panel
+  const kRows=S.experts.map(e=>{ const k=calcK(e); return `<tr><td>${esc(e.id)}</td><td class="l">${esc(e.name)}</td><td>${f2(k.kc)}</td><td>${f2(k.ka)}</td><td><b>${f2(k.K)}</b></td><td><span class="tag ${k.cat}">${k.cat}</span></td></tr>`; }).join('');
+  const sec2=N?`<p>Se evaluó la competencia de ${N} expertos. Resultado: <b>${cnt.Alto}</b> de competencia alta, <b>${cnt.Medio}</b> media y <b>${cnt.Bajo}</b> baja. ${c.onlyAM?`Participaron en las rondas los de competencia alta y media (${inc.length} expertos).`:`Participaron todos los expertos (${inc.length}).`} Umbrales: Alto si K ≥ ${c.altoMin}; Medio si K ≥ ${c.medioMin}.</p>
+   <table><tr><th>ID</th><th>Experto</th><th>Kc</th><th>Ka</th><th>K</th><th>Categoría</th></tr>${kRows}</table>`:'<p class="mut">Sin datos del panel de expertos.</p>';
+  // 3. encuesta
+  const nOk=resE.rows.filter(r=>r.cat<=1).length;
+  const sec3=nT?`<p>Encuesta diagnóstica aplicada a <b>${nT}</b> docentes (escala S, CS, AV, RV, NU).</p>${resultHTML(resE,LIK,{rowName:'Ítem',report:true})}`:'<p class="mut">Sin respuestas de la encuesta a docentes.</p>';
+  // 4. entrevista
+  const thr=c.codeThr;
+  const sec4=N&&Object.keys(S.interviews).length?`<p>Síntesis de las entrevistas semiestructuradas a ${N} expertos. Un código se considera consensuado si lo mencionan al menos el ${thr} % de los expertos.</p>`+QS.map((q,i)=>{ const x=codeFreq(i); return `<h3>${i+1}. ${esc(q)}</h3><table><tr><th class="l">Código</th><th>Expertos</th><th>%</th><th>¿Consensuado?</th></tr>${x.list.map(([cd,n])=>{ const p=Math.round(n/N*100); return `<tr><td class="l">${esc(cd)}</td><td>${n}</td><td>${p}</td><td>${p>=thr?'Sí':'No'}</td></tr>`; }).join('')||'<tr><td colspan="4" class="mut">Sin códigos.</td></tr>'}</table>`; }).join(''):'<p class="mut">Sin entrevistas registradas.</p>';
+  // 5. rondas
+  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=Object.keys(r.ratings).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(v=>`<td>${f2(v)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
+  const sec5=hayR?`<p>Valoración de ${S.indicators.length} indicadores por los expertos con la escala MA, BA, A, PA e I, en ${S.rounds.length} ronda(s).</p>
+   <table><tr><th>Ronda</th><th>Expertos</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>N</th><th>Indicadores en MA o BA</th><th>%</th></tr>${comp}</table>`+
+   S.rounds.map((r,i)=>Object.keys(r.ratings).length?`<h3>Ronda ${i+1}</h3>${resultHTML(roundResult(r),VAL,{rowName:'Indicador',report:true})}`:'').join(''):'<p class="mut">Sin valoraciones de indicadores.</p>';
+  // 6. indicadores finales
+  const okN=resL.rows.filter(r=>r.cat<=1).length, m=resL.rows.length;
+  const indTable=resL.rows.map(r=>{ const ind=S.indicators.find(x=>x.code===r.code)||{}; return `<tr><td><b>${esc(r.code)}</b></td><td class="l">${esc(ind.factor||'')}</td><td class="l">${esc(ind.text||'')}</td><td>${f2(r.np)}</td><td><b>${VAL[r.cat].k}</b></td><td>${r.cat<=1?'Sí':'No'}</td></tr>`; }).join('');
+  const sinCons=resL.rows.filter(r=>r.cat>1).map(r=>r.code);
+  const sec6=m?`<p>Según la última ronda (ronda ${L+1}), <b>${okN} de ${m}</b> indicadores (${Math.round(okN/m*100)} %) quedaron en MA o BA y se consideran consensuados.</p>
+   <table><tr><th>Código</th><th class="l">Factor</th><th class="l">Indicador</th><th>N − Prm</th><th>Categoría</th><th>¿Consensuado?</th></tr>${indTable}</table>`:'<p class="mut">Sin resultados de indicadores.</p>';
+  // 7. conclusiones
+  const concl=[]; if(N) concl.push(`El panel quedó conformado por ${inc.length} expertos con competencia alta o media de un total de ${N}.`);
+  if(nT) concl.push(`En la encuesta a ${nT} docentes, ${nOk} de ${resE.rows.length} ítems quedan en las categorías S o CS (N = ${f2(resE.N)}).`);
+  if(m) concl.push(`En la validación de indicadores, N = ${f2(resL.N)} y ${okN} de ${m} indicadores alcanzan consenso (MA o BA).${sinCons.length?` Sin consenso: ${sinCons.join(', ')}; requieren otra ronda o reformulación.`:' Hay consenso en la totalidad de los indicadores.'}`);
+  if(S.rounds.length>1&&hayR){ const a=roundResult(S.rounds[0]), b=resL; concl.push(`Entre la ronda 1 y la ronda ${L+1}, N pasó de ${f2(a.N)} a ${f2(b.N)}.`); }
+  const sim=esSim()?`<div class="note warn"><b>Datos simulados.</b> Este informe se generó con respuestas simuladas para ensayar el procedimiento. No corresponde a un panel real de expertos ni a docentes encuestados.</div>`:'';
+  $('t-inf').innerHTML=`<div class="card noprint"><h2>Informe de resultados</h2>
+   <p class="mut">Se arma solo con los datos que tengas en las pestañas 1 a 4. Guárdalo como PDF con «Imprimir» (elige «Guardar como PDF») o descárgalo como HTML.</p>
+   <div class="row">Título <input type="text" style="width:340px" value="${esc(c.repTitle)}" onchange="setRep('repTitle',this.value)"> Autor <input type="text" style="width:240px" value="${esc(c.repAuthor)}" onchange="setRep('repAuthor',this.value)"></div>
+   <div class="row"><span class="mut">${esSim()?'Modo simulación: el informe se marca automáticamente como «datos simulados».':'Modo datos reales: el informe no lleva la marca de simulado.'}</span>
+   <button class="pri" onclick="window.print()">Imprimir / Guardar como PDF</button> <button onclick="descargarInforme()">Descargar HTML</button></div></div>
+  <div id="informe" class="card rep"><h1>${esc(c.repTitle)}</h1>
+   <p class="mut">Doctorado en Educación Matemática · Universidad Antonio Nariño${c.repAuthor?' · '+esc(c.repAuthor):''} · ${hoy}</p>${sim}
+   <h2>1. Metodología</h2>
+   <p>Se aplicó el método Delphi con el modelo de Thorgenson. Las categorías cualitativas ordenadas se convierten en valores reales continuos mediante la función recíproca de la distribución normal: con las frecuencias absolutas se obtienen las relativas acumuladas, se les aplica la inversa de la normal (los valores 0 y 1 se truncan en ∓${Z_MAX}), y el promedio de cada columna sobre todos los ítems define los puntos de corte P1…Pk. Cada ítem tiene un valor N − Prm, donde Prm es el promedio de sus valores z y N es el promedio de los Prm. El ítem se ubica en la primera categoría cuyo punto de corte supera su N − Prm.</p>
+   <h2>2. Selección de expertos</h2>${sec2}
+   <h2>3. Encuesta a docentes</h2>${sec3}
+   <h2>4. Entrevista a expertos</h2>${sec4}
+   <h2>5. Validación de indicadores por expertos</h2>${sec5}
+   <h2>6. Indicadores consensuados</h2>${sec6}
+   <h2>7. Conclusiones</h2>${concl.length?'<ul>'+concl.map(x=>`<li>${x}</li>`).join('')+'</ul>':'<p class="mut">Aún no hay datos.</p>'}</div>`;
+}
+function descargarInforme(){ const css=document.querySelector('style').textContent; const html='<!doctype html><html lang="es"><head><meta charset="utf-8"><title>'+esc(S.cfg.repTitle)+'</title><style>'+css+'</style></head><body><main>'+$('informe').outerHTML+'</main></body></html>';
+  const b=new Blob([html],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='informe_delphi_multicrea.html'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+
+// ============================ COPIAR EJEMPLO DEL PROFESOR A LOS DATOS DE TRABAJO ============================
+function expandir(counts,j){ const a=[]; counts.forEach((c,k)=>{ for(let i=0;i<c;i++) a.push(k); }); const r=(j*7)%a.length; return a.slice(r).concat(a.slice(0,r)); }
+function cargarEjemplo(key){ if(!esSim()) return; const p=PRESETS[key], n=sumArr(p.rows[0][1]);
+  const hay = key==='enc' ? S.teachers.length : (S.experts.length || Object.keys(curR().ratings).length);
+  const msg = key==='enc'
+    ? 'Esto reemplaza las respuestas de la encuesta (pestaña 2) por '+n+' docentes que reproducen el ejemplo. Las preguntas A–G del ejemplo quedan como P1–P7 y P8–P10 sin respuesta.'
+    : 'Esto reemplaza el panel de expertos, las entrevistas, los indicadores y las rondas (pestañas 1, 3 y 4) por '+n+' expertos de ejemplo y los 13 indicadores del profesor.';
+  if(hay && !confirm(msg+'\n\nSe descargará antes una copia de seguridad JSON de tus datos actuales. ¿Continuar?')) return;
+  if(hay) exportar();
+  if(key==='enc'){
+    S.teachers=Array.from({length:n},(_,i)=>({id:'D'+(i+1),a:Array(10).fill(0)}));
+    p.rows.forEach((r,j)=>{ expandir(r[1],j).forEach((k,i)=>{ S.teachers[i].a[j]=LIK[k].v; }); });
+    renderAll(); goTab('t-enc');
+  } else {
+    S.experts=Array.from({length:n},(_,i)=>({id:'E'+(i+1),name:'Experto ejemplo '+(i+1),kc:10,src:{teo:'A',exp:'A',nac:'A',ext:'A',est:'A',int:'A'}}));
+    S.interviews={}; S.indicators=p.rows.map(r=>({code:r[0],factor:'Factor '+r[0][0],text:'Indicador '+r[0]+' (ejemplo del profesor)'}));
+    const R={ratings:{}}; S.experts.forEach(e=>R.ratings[e.id]={});
+    p.rows.forEach((r,j)=>{ expandir(r[1],j).forEach((k,i)=>{ R.ratings['E'+(i+1)][r[0]]=VAL[k].k; }); });
+    S.rounds=[R]; S.cur=0; renderAll(); goTab('t-ron');
+  } }
+
+// ============================ DEMO, EXPORTAR, IMPORTAR ============================
+function demoCompleta(){ if(!esSim()) return; if((S.experts.length||S.teachers.length)&&!confirm('Esto reemplaza los datos actuales por una simulación completa. ¿Continuar?')) return;
+  S=nuevoEstado(); S.mode='sim'; S.cfg.onlyAM=true; renderAllSilent(); QUIET=true;
+  try{ $('nExp').value=15; genExperts(); genInterviews();
+  $('nDoc').value=30; $('lvDoc').value='alto'; genTeachers();
+  $('lvRon').value='alto'; genRound(); nextRound(true); }finally{ QUIET=false; } goTab('t-ron'); }
+function renderAllSilent(){ renderModo(); renderK(); renderEnc(); renderEnt(); renderRon(); renderVer(); renderInf(); }
+function exportar(){ const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='delphi_multicrea_datos.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+function importar(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const P=JSON.parse(r.result); S=Object.assign(nuevoEstado(),P); S.cfg=Object.assign(nuevoEstado().cfg,S.cfg); S.mode=modoDe(P); migrarInd(); renderAll(); }catch(e){ alert('El archivo no es un JSON válido de este simulador.'); } }; r.readAsText(f); inp.value=''; }
+function reiniciar(){ if(confirm('¿Borrar todos los datos del simulador?')){ S=nuevoEstado(); renderAll(); } }
+
+renderAll();
+let t0='t-k'; try{ t0=sessionStorage.getItem('tab')||'t-k'; }catch(e){} goTab(t0);
+</script>
+</body>
+</html>
