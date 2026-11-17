@@ -229,7 +229,7 @@ function renderModo(){ const sim=esSim();
 
 // ============================ UTILIDADES ============================
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const f2=x=>(Math.round(x*100)/100).toFixed(2);
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -283,13 +283,14 @@ function analysisText(res,labels,opts){
   const groups=labels.map((l,k)=>({l,k,items:res.rows.filter(r=>r.cat===k).map(r=>r.code)})).filter(g=>g.items.length);
   const top2=res.rows.filter(r=>r.cat<=1).length, m=res.rows.length, pct=Math.round(top2/m*100);
   const verdict = pct===100 ? 'Hay un buen consenso en su totalidad' : pct>=80 ? 'Hay un buen consenso, casi la totalidad' : pct>=50 ? 'El consenso es parcial; conviene otra ronda' : 'No hay consenso suficiente; se requiere otra ronda';
-  return `<div class="note"><b>Análisis de los resultados.</b> De acuerdo con los puntos de corte (${cutTxt}) y con N = ${f2(res.N)}, ${groups.map(g=>`${g.items.length>1?'los ítems':'el ítem'} <b>${g.items.join(', ')}</b> ${g.items.length>1?'se ubican':'se ubica'} en el intervalo «${g.l.t}» (${g.l.k})`).join('; ')}. ${m?`${top2} de ${m} (${pct} %) quedan en las dos primeras categorías. `:''}<b>${verdict}.</b></div>`;
+  return `<div class="note"><b>Análisis de los resultados.</b> De acuerdo con los puntos de corte (${cutTxt}) y con N = ${f2(res.N)}, ${groups.map(g=>`${g.items.length>1?'los ítems':'el ítem'} <b>${esc(g.items.join(', '))}</b> ${g.items.length>1?'se ubican':'se ubica'} en el intervalo «${g.l.t}» (${g.l.k})`).join('; ')}. ${m?`${top2} de ${m} (${pct} %) quedan en las dos primeras categorías. `:''}<b>${verdict}.</b></div>`;
 }
 
 // ============================ 1 · PANEL DE EXPERTOS ============================
 function calcK(e){ const kc=(+e.kc||0)/10; const ka=SRC.reduce((s,x)=>s+x.w[e.src[x.k]||'M'],0); const K=Math.round(((kc+ka)/2)*100)/100; const c=S.cfg; const cat=K>=c.altoMin-1e-9?'Alto':K>=c.medioMin-1e-9?'Medio':'Bajo'; return {kc,ka,K,cat}; }
 function includedExperts(){ return S.experts.filter(e=>!S.cfg.onlyAM||calcK(e).cat!=='Bajo'); }
-function nuevoExperto(){ const n=S.experts.length+1; return {id:'E'+n,name:'Experto '+n,inst:'',linea:'',fecha:'',kc:7,src:{teo:'M',exp:'M',nac:'M',ext:'M',est:'M',int:'M'}}; }
+function nextId(arr,pre){ let m=0; arr.forEach(x=>{ const g=String(x.id).match(new RegExp('^'+pre+'(\\d+)$')); if(g) m=Math.max(m,+g[1]); }); return m+1; }
+function nuevoExperto(){ const n=nextId(S.experts,'E'); return {id:'E'+n,name:'Experto '+n,inst:'',linea:'',fecha:'',kc:7,src:{teo:'M',exp:'M',nac:'M',ext:'M',est:'M',int:'M'}}; }
 function addExpert(){ S.experts.push(nuevoExperto()); renderAll(); }
 function delExpert(i){ const id=S.experts[i].id; S.experts.splice(i,1); delete S.interviews[id]; S.rounds.forEach(r=>delete r.ratings[id]); renderAll(); }
 function setE(i,k,v){ S.experts[i][k]=v; renderAll(); }
@@ -316,7 +317,7 @@ function renderK(){
 }
 
 // ============================ 2 · ENCUESTA A DOCENTES ============================
-function addTeacher(){ S.teachers.push({id:'D'+(S.teachers.length+1),a:Array(10).fill(0)}); renderAll(); }
+function addTeacher(){ S.teachers.push({id:'D'+nextId(S.teachers,'D'),a:Array(10).fill(0)}); renderAll(); }
 function delTeacher(i){ S.teachers.splice(i,1); renderAll(); }
 function setT(i,j,v){ S.teachers[i].a[j]=+v; renderAll(); }
 function simDocExtras(t){
@@ -405,12 +406,16 @@ function renderEnt(){
 }
 
 // ============================ 4 · INDICADORES Y RONDAS ============================
-function setInd(i,k,v){ S.indicators[i][k]=v; renderAll(); }
-function addInd(){ S.indicators.push({code:'X'+(S.indicators.length+1),factor:'Nuevo',text:''}); renderAll(); }
+function setInd(i,k,v){
+  if(k==='code'){ v=String(v).trim(); const old=S.indicators[i].code;
+    if(!v||S.indicators.some((x,j)=>j!==i&&x.code===v)){ alert('El código del indicador no puede estar vacío ni repetirse.'); renderAll(); return; }
+    S.rounds.forEach(r=>Object.values(r.ratings).forEach(o=>{ if(Object.prototype.hasOwnProperty.call(o,old)){ o[v]=o[old]; delete o[old]; } })); }
+  S.indicators[i][k]=v; renderAll(); }
+function addInd(){ let n=S.indicators.length+1; while(S.indicators.some(x=>x.code==='X'+n)) n++; S.indicators.push({code:'X'+n,factor:'Nuevo',text:''}); renderAll(); }
 function delInd(i){ const c=S.indicators[i].code; S.indicators.splice(i,1); S.rounds.forEach(r=>Object.values(r.ratings).forEach(o=>delete o[c])); renderAll(); }
 function curR(){ return S.rounds[S.cur]; }
 function setRound(v){ S.cur=+v; renderAll(); }
-function setRate(id,code,v){ const r=curR().ratings; (r[id]=r[id]||{})[code]=v; renderAll(); }
+function setRate(id,j,v){ const code=S.indicators[+j].code, r=curR().ratings; (r[id]=r[id]||{})[code]=v; renderAll(); }
 function genRound(){ if(!esSim()) return; const R=curR(); if(!ovw(Object.keys(R.ratings).length,'Esto reemplaza las valoraciones de la ronda '+(S.cur+1)+'.')) return; const lv=$('lvRon').value; S.cfg.level=lv; const bias=S.indicators.map(()=>rnd(-.6,.5)); R.ratings={};
   includedExperts().forEach(e=>{ R.ratings[e.id]={}; S.indicators.forEach((ind,j)=>{ R.ratings[e.id][ind.code]=VAL[5-sampleLikert(MU[lv]+bias[j])].k; }); }); renderAll(); }
 function nextRound(conv){ if(conv&&!esSim()) return; const prev=curR(), nr={ratings:{}};
@@ -418,12 +423,13 @@ function nextRound(conv){ if(conv&&!esSim()) return; const prev=curR(), nr={rati
     Object.entries(prev.ratings).forEach(([id,o])=>{ nr.ratings[id]={}; S.indicators.forEach(ind=>{ let v=VAL.findIndex(x=>x.k===o[ind.code]); if(v<0) return; if(v!==med[ind.code] && Math.random()<.75) v+=Math.sign(med[ind.code]-v); nr.ratings[id][ind.code]=VAL[v].k; }); }); }
   S.rounds.push(nr); S.cur=S.rounds.length-1; renderAll(); }
 function delRound(){ if(S.rounds.length<2) return; S.rounds.splice(S.cur,1); S.cur=Math.max(0,S.cur-1); renderAll(); }
-function roundResult(R){ const rows=S.indicators.map(ind=>({code:ind.code,counts:VAL.map(v=>Object.values(R.ratings).filter(o=>o[ind.code]===v.k).length)})); return thorgenson(rows,5); }
+function ratingsOf(R){ const inc=new Set(includedExperts().map(e=>e.id)); return Object.entries(R.ratings).filter(([id])=>inc.has(id)).map(([,o])=>o); }
+function roundResult(R){ const rr=ratingsOf(R); const rows=S.indicators.map(ind=>({code:ind.code,counts:VAL.map(v=>rr.filter(o=>o[ind.code]===v.k).length)})); return thorgenson(rows,5); }
 function renderRon(){
   const inc=includedExperts(), R=curR();
   const indRows=S.indicators.map((x,i)=>`<tr><td><input type="text" style="width:56px" value="${esc(x.code)}" onchange="setInd(${i},'code',this.value.trim())"></td><td><input type="text" value="${esc(x.factor)}" onchange="setInd(${i},'factor',this.value)"></td><td class="l"><input type="text" style="width:100%;min-width:360px" value="${esc(x.text)}" onchange="setInd(${i},'text',this.value)"></td><td><button class="sm" onclick="delInd(${i})">✕</button></td></tr>`).join('');
-  const grid=inc.map(e=>`<tr><td title="${esc(e.name)}">${esc(e.id)}</td>${S.indicators.map(ind=>`<td>${sel(VAL.map(v=>[v.k,v.k]),(R.ratings[e.id]||{})[ind.code]||'',`setRate('${e.id}','${esc(ind.code)}',this.value)`,true)}</td>`).join('')}</tr>`).join('');
-  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=Object.keys(r.ratings).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(c=>`<td>${f2(c)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
+  const grid=inc.map(e=>`<tr><td title="${esc(e.name)}">${esc(e.id)}</td>${S.indicators.map((ind,j)=>`<td>${sel(VAL.map(v=>[v.k,v.k]),(R.ratings[e.id]||{})[ind.code]||'',`setRate('${e.id}',${j},this.value)`,true)}</td>`).join('')}</tr>`).join('');
+  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=ratingsOf(r).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(c=>`<td>${f2(c)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
   $('t-ron').innerHTML=`<div class="card"><h2>Indicadores propuestos</h2>
    <p class="mut">Propuesta para el modelo didáctico de Comprensión Robusta Matemática (funciones, educación media, aplicativos web): 3 indicadores por cada proceso cognoscitivo (Abstraer el argumento, Formular la función, Valorar la referencia), 2 de mediación tecnológica y 2 de comprensión robusta y evaluación del modelo. Edítalos libremente; se recalcula todo.</p>
    <details><summary>Ver / editar los ${S.indicators.length} indicadores</summary><div class="scroll"><table><tr><th>Código</th><th>Factor</th><th>Descripción</th><th></th></tr>${indRows}</table></div><button onclick="addInd()">+ Añadir indicador</button> <button onclick="resetInd()">Restablecer a la propuesta de mi tesis</button></details></div>
@@ -433,7 +439,7 @@ function renderRon(){
    ${esSim()?`<div class="row">Generar respuestas de esta ronda con tendencia <select id="lvRon"><option value="alto"${S.cfg.level==='alto'?' selected':''}>alta (MA/BA)</option><option value="medio"${S.cfg.level==='medio'?' selected':''}>media</option><option value="bajo"${S.cfg.level==='bajo'?' selected':''}>baja</option></select> <button class="pri" onclick="genRound()">Generar respuestas</button></div>`:''}
    ${inc.length?'':'<div class="note warn">No hay expertos participantes. Crea el panel en la pestaña 1.</div>'}
    <div class="scroll"><table><tr><th>Experto</th>${S.indicators.map(x=>`<th title="${esc(x.text)}">${esc(x.code)}</th>`).join('')}</tr>${grid}</table></div></div>
-  <div class="card"><h2>Resultado de la ronda ${S.cur+1} (n = ${Object.keys(R.ratings).length} expertos)</h2>${resultHTML(roundResult(R),VAL,{rowName:'Indicador'})}</div>
+  <div class="card"><h2>Resultado de la ronda ${S.cur+1} (n = ${ratingsOf(R).length} expertos)</h2>${resultHTML(roundResult(R),VAL,{rowName:'Indicador'})}</div>
   <div class="card"><h2>Comparación entre rondas</h2><table><tr><th>Ronda</th><th>Expertos</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>N</th><th>Indicadores en MA o BA</th><th>%</th></tr>${comp}</table>
    <p class="mut">Criterio práctico: se detiene la técnica cuando el consenso se estabiliza entre dos rondas. Confirma con tu profesor el criterio exacto de parada.</p></div>`;
 }
@@ -470,7 +476,7 @@ function renderInf(){
   const c=S.cfg, inc=includedExperts(), N=S.experts.length, nT=S.teachers.length;
   const hoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
   const cnt={Alto:0,Medio:0,Bajo:0}; S.experts.forEach(e=>cnt[calcK(e).cat]++);
-  const hayR=S.rounds.some(r=>Object.keys(r.ratings).length);
+  const hayR=S.rounds.some(r=>ratingsOf(r).length);
   const L=S.rounds.length-1, resL=roundResult(S.rounds[L]);
   const resE=surveyResult();
   // 2. panel
@@ -484,10 +490,10 @@ function renderInf(){
   const thr=c.codeThr;
   const sec4=N&&Object.keys(S.interviews).length?`<p>Síntesis de las entrevistas semiestructuradas a ${N} expertos. Un código se considera consensuado si lo mencionan al menos el ${thr} % de los expertos.</p>`+QS.map((q,i)=>{ const x=codeFreq(i); return `<h3>${i+1}. ${esc(q)}</h3><table><tr><th class="l">Código</th><th>Expertos</th><th>%</th><th>¿Consensuado?</th></tr>${x.list.map(([cd,n])=>{ const p=Math.round(n/N*100); return `<tr><td class="l">${esc(cd)}</td><td>${n}</td><td>${p}</td><td>${p>=thr?'Sí':'No'}</td></tr>`; }).join('')||'<tr><td colspan="4" class="mut">Sin códigos.</td></tr>'}</table>`; }).join(''):'<p class="mut">Sin entrevistas registradas.</p>';
   // 5. rondas
-  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=Object.keys(r.ratings).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(v=>`<td>${f2(v)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
+  const comp=S.rounds.map((r,i)=>{ const x=roundResult(r); const n=ratingsOf(r).length; const t2=x.rows.filter(q=>q.cat<=1).length; return `<tr><td>Ronda ${i+1}</td><td>${n}</td>${x.cuts.slice(0,4).map(v=>`<td>${f2(v)}</td>`).join('')}<td>${f2(x.N)}</td><td>${t2} / ${x.rows.length}</td><td>${x.rows.length?Math.round(t2/x.rows.length*100):0} %</td></tr>`; }).join('');
   const sec5=hayR?`<p>Valoración de ${S.indicators.length} indicadores por los expertos con la escala MA, BA, A, PA e I, en ${S.rounds.length} ronda(s).</p>
    <table><tr><th>Ronda</th><th>Expertos</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>N</th><th>Indicadores en MA o BA</th><th>%</th></tr>${comp}</table>`+
-   S.rounds.map((r,i)=>Object.keys(r.ratings).length?`<h3>Ronda ${i+1}</h3>${resultHTML(roundResult(r),VAL,{rowName:'Indicador',report:true})}`:'').join(''):'<p class="mut">Sin valoraciones de indicadores.</p>';
+   S.rounds.map((r,i)=>ratingsOf(r).length?`<h3>Ronda ${i+1}</h3>${resultHTML(roundResult(r),VAL,{rowName:'Indicador',report:true})}`:'').join(''):'<p class="mut">Sin valoraciones de indicadores.</p>';
   // 6. indicadores finales
   const okN=resL.rows.filter(r=>r.cat<=1).length, m=resL.rows.length;
   const indTable=resL.rows.map(r=>{ const ind=S.indicators.find(x=>x.code===r.code)||{}; return `<tr><td><b>${esc(r.code)}</b></td><td class="l">${esc(ind.factor||'')}</td><td class="l">${esc(ind.text||'')}</td><td>${f2(r.np)}</td><td><b>${VAL[r.cat].k}</b></td><td>${r.cat<=1?'Sí':'No'}</td></tr>`; }).join('');
@@ -497,7 +503,7 @@ function renderInf(){
   // 7. conclusiones
   const concl=[]; if(N) concl.push(`El panel quedó conformado por ${inc.length} expertos con competencia alta o media de un total de ${N}.`);
   if(nT) concl.push(`En la encuesta a ${nT} docentes, ${nOk} de ${resE.rows.length} ítems quedan en las categorías S o CS (N = ${f2(resE.N)}).`);
-  if(m) concl.push(`En la validación de indicadores, N = ${f2(resL.N)} y ${okN} de ${m} indicadores alcanzan consenso (MA o BA).${sinCons.length?` Sin consenso: ${sinCons.join(', ')}; requieren otra ronda o reformulación.`:' Hay consenso en la totalidad de los indicadores.'}`);
+  if(m) concl.push(`En la validación de indicadores, N = ${f2(resL.N)} y ${okN} de ${m} indicadores alcanzan consenso (MA o BA).${sinCons.length?` Sin consenso: ${esc(sinCons.join(', '))}; requieren otra ronda o reformulación.`:' Hay consenso en la totalidad de los indicadores.'}`);
   if(S.rounds.length>1&&hayR){ const a=roundResult(S.rounds[0]), b=resL; concl.push(`Entre la ronda 1 y la ronda ${L+1}, N pasó de ${f2(a.N)} a ${f2(b.N)}.`); }
   const sim=esSim()?`<div class="note warn"><b>Datos simulados.</b> Este informe se generó con respuestas simuladas para ensayar el procedimiento. No corresponde a un panel real de expertos ni a docentes encuestados.</div>`:'';
   $('t-inf').innerHTML=`<div class="card noprint"><h2>Informe de resultados</h2>
@@ -548,7 +554,32 @@ function demoCompleta(){ if(!esSim()) return; if((S.experts.length||S.teachers.l
   $('lvRon').value='alto'; genRound(); nextRound(true); }finally{ QUIET=false; } goTab('t-ron'); }
 function renderAllSilent(){ renderModo(); renderK(); renderEnc(); renderEnt(); renderRon(); renderVer(); renderInf(); }
 function exportar(){ const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='delphi_multicrea_datos.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
-function importar(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const P=JSON.parse(r.result); S=Object.assign(nuevoEstado(),P); S.cfg=Object.assign(nuevoEstado().cfg,S.cfg); S.mode=modoDe(P); migrarInd(); renderAll(); }catch(e){ alert('El archivo no es un JSON válido de este simulador.'); } }; r.readAsText(f); inp.value=''; }
+function validarEstado(P){
+  const obj=x=>x&&typeof x==='object'&&!Array.isArray(x), idOk=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,20}$/.test(x);
+  if(!obj(P)) return 'el archivo no contiene un objeto de datos';
+  if(!Array.isArray(P.experts)) return 'falta la lista de expertos';
+  const ids=new Set(); for(const e of P.experts){ if(!obj(e)||!idOk(e.id)) return 'hay un experto sin ID válido'; if(ids.has(e.id)) return 'hay IDs de expertos repetidos ('+e.id+')'; ids.add(e.id); if(!obj(e.src)) return 'el experto '+e.id+' no tiene fuentes de argumentación'; }
+  if(!Array.isArray(P.teachers)) return 'falta la lista de docentes';
+  for(const t of P.teachers){ if(!obj(t)||!idOk(t.id)||!Array.isArray(t.a)) return 'hay un docente con datos no válidos'; }
+  if(!obj(P.interviews)) return 'faltan las entrevistas';
+  if(!Array.isArray(P.indicators)||!P.indicators.length) return 'faltan los indicadores';
+  const cods=new Set(); for(const x of P.indicators){ if(!obj(x)||typeof x.code!=='string'||!x.code.trim()) return 'hay un indicador sin código'; if(cods.has(x.code)) return 'hay códigos de indicador repetidos ('+x.code+')'; cods.add(x.code); }
+  if(!Array.isArray(P.rounds)||!P.rounds.length) return 'faltan las rondas';
+  for(const r of P.rounds){ if(!obj(r)||!obj(r.ratings)) return 'hay una ronda con valoraciones no válidas'; for(const o of Object.values(r.ratings)) if(!obj(o)) return 'hay valoraciones no válidas'; }
+  if(P.cfg!==undefined&&!obj(P.cfg)) return 'la configuración no es válida';
+  return null; }
+function importar(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{
+  let P; try{ P=JSON.parse(r.result); }catch(e){ alert('El archivo no es un JSON válido.'); return; }
+  const err=validarEstado(P); if(err){ alert('No se importó el archivo: '+err+'.'); return; }
+  if(hayDatos()&&!confirm('Importar reemplaza los datos actuales por los del archivo.\n\n¿Continuar?')) return;
+  const old=S;
+  try{ const N=Object.assign(nuevoEstado(),P); N.cfg=Object.assign(nuevoEstado().cfg,P.cfg||{}); N.mode=modoDe(P);
+    N.teachers=P.teachers.map(t=>Object.assign({},t,{a:Array.from({length:10},(_,j)=>+t.a[j]||0)}));
+    Object.keys(N.interviews).forEach(k=>{ if(!Array.isArray(N.interviews[k])) delete N.interviews[k]; });
+    N.cur=Number.isInteger(P.cur)&&P.cur>=0&&P.cur<N.rounds.length?P.cur:0;
+    S=N; migrarInd(); renderAll(); }
+  catch(e){ S=old; try{ renderAll(); }catch(_){} alert('No se pudo importar el archivo; se conservaron los datos actuales.'); } };
+  r.readAsText(f); inp.value=''; }
 function reiniciar(){ if(confirm('¿Borrar todos los datos del simulador?')){ S=nuevoEstado(); renderAll(); } }
 
 renderAll();
