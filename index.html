@@ -207,12 +207,12 @@ function migrarInd(){ try{ if(S.indVer!==2){ if(JSON.stringify(S.indicators)===J
 
 // ============================ ESTADO ============================
 const KEY='multicrea_delphi_v1';
-function nuevoEstado(){ return {mode:'real',experts:[],teachers:[],interviews:{},indicators:defaultIndicators(),rounds:[{ratings:{}}],cur:0,selExp:'',selDoc:'',cfg:{altoMin:0.8,medioMin:0.7,onlyAM:true,codeThr:60,level:'alto',repTitle:'Informe de resultados del método Delphi',repAuthor:'',repSim:true}}; }
+function nuevoEstado(){ return {mode:'real',experts:[],teachers:[],interviews:{},indicators:defaultIndicators(),rounds:[{ratings:{}}],cur:0,selExp:'',selDoc:'',kVer:2,cfg:{altoMin:0.8,medioMin:0.5,onlyAM:true,codeThr:60,level:'alto',repTitle:'Informe de resultados del método Delphi',repAuthor:'',repSim:true}}; }
 let S = nuevoEstado();
 // Datos guardados antes de existir el modo: se consideran simulados salvo que el informe ya estuviera desmarcado como simulado
 function modoDe(P){ return P.mode==='sim'||P.mode==='real' ? P.mode : ((P.cfg&&P.cfg.repSim===false)?'real':'sim'); }
 const esSim=()=>S.mode==='sim';
-try{ const raw=localStorage.getItem(KEY); if(raw){ const P=JSON.parse(raw); S=Object.assign(nuevoEstado(),P); S.cfg=Object.assign(nuevoEstado().cfg,S.cfg); S.mode=modoDe(P); } }catch(e){}
+try{ const raw=localStorage.getItem(KEY); if(raw){ const P=JSON.parse(raw); S=Object.assign(nuevoEstado(),P); S.cfg=Object.assign(nuevoEstado().cfg,S.cfg); S.mode=modoDe(P); if(P.kVer!==2){ if(S.cfg.medioMin===0.7) S.cfg.medioMin=0.5; S.kVer=2; } } }catch(e){}
 migrarInd();
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function renderAll(){ renderModo(); renderK(); renderEnc(); renderEnt(); renderRon(); renderVer(); renderInf(); save(); }
@@ -311,7 +311,7 @@ function renderK(){
   <div class="row"><button class="pri" onclick="addExpert()">+ Añadir experto</button>${esSim()?` Generar <input id="nExp" type="number" min="1" max="60" value="${S.experts.length||15}"> expertos al azar <button onclick="genExperts()">Generar</button>`:''}</div>
   <div class="row">Categorías: Alto si K ≥ <input type="number" step="0.05" min="0" max="1" value="${c.altoMin}" onchange="setCfg('altoMin',+this.value)"> · Medio si K ≥ <input type="number" step="0.05" min="0" max="1" value="${c.medioMin}" onchange="setCfg('medioMin',+this.value)"> · Bajo si es menor.
    <label><input type="checkbox" ${c.onlyAM?'checked':''} onchange="setCfg('onlyAM',this.checked)"> Solo Alto y Medio participan en las rondas</label></div>
-  <div class="note warn">Los umbrales por defecto (0,8 y 0,7) reproducen la tabla de tu profesor (K = 0,7 es Medio; 0,6 y 0,5 son Bajo). Algunos textos usan 0,5 como límite entre Medio y Bajo; puedes ajustarlo aquí.</div>
+  <div class="note warn">Umbrales por defecto según Crespo: Alto si K ≥ 0,8; Medio si 0,5 ≤ K &lt; 0,8; Bajo si K &lt; 0,5. La tabla de las diapositivas del profesor usa 0,7 como límite entre Medio y Bajo (K = 0,6 es Bajo); si prefieres ese criterio, cámbialo aquí.</div>
   <div class="scroll"><table><tr><th>ID</th><th>Nombre</th><th>Kc (0–10)</th>${SRC.map(s=>`<th title="${esc(s.t)}">${esc(s.t.length>22?s.t.slice(0,20)+'…':s.t)}</th>`).join('')}<th>Kc</th><th>Ka</th><th>K</th><th>Categoría</th><th></th></tr>${rows||`<tr><td colspan="14" class="mut">Sin expertos. ${esSim()?'Añade uno o genera un panel aleatorio.':'Añade a cada experto con sus respuestas reales.'}</td></tr>`}</table></div>
   <p>Alto: <span class="tag Alto">${cnt.Alto}</span> · Medio: <span class="tag Medio">${cnt.Medio}</span> · Bajo: <span class="tag Bajo">${cnt.Bajo}</span> · Participan en las rondas: <b>${includedExperts().length}</b> de ${S.experts.length}</p></div>`;
 }
@@ -477,7 +477,9 @@ function renderInf(){
   const hoy=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
   const cnt={Alto:0,Medio:0,Bajo:0}; S.experts.forEach(e=>cnt[calcK(e).cat]++);
   const hayR=S.rounds.some(r=>ratingsOf(r).length);
-  const L=S.rounds.length-1, resL=roundResult(S.rounds[L]);
+  // última y primera ronda que tienen valoraciones (una ronda nueva aún vacía no cuenta)
+  const conDatos=S.rounds.map((r,i)=>ratingsOf(r).length?i:-1).filter(i=>i>=0);
+  const L=conDatos.length?conDatos[conDatos.length-1]:S.rounds.length-1, F=conDatos.length?conDatos[0]:0, resL=roundResult(S.rounds[L]);
   const resE=surveyResult();
   // 2. panel
   const kRows=S.experts.map(e=>{ const k=calcK(e); return `<tr><td>${esc(e.id)}</td><td class="l">${esc(e.name)}</td><td class="l">${esc(e.inst||'')}</td><td>${f2(k.kc)}</td><td>${f2(k.ka)}</td><td><b>${f2(k.K)}</b></td><td><span class="tag ${k.cat}">${k.cat}</span></td></tr>`; }).join('');
@@ -498,13 +500,13 @@ function renderInf(){
   const okN=resL.rows.filter(r=>r.cat<=1).length, m=resL.rows.length;
   const indTable=resL.rows.map(r=>{ const ind=S.indicators.find(x=>x.code===r.code)||{}; return `<tr><td><b>${esc(r.code)}</b></td><td class="l">${esc(ind.factor||'')}</td><td class="l">${esc(ind.text||'')}</td><td>${f2(r.np)}</td><td><b>${VAL[r.cat].k}</b></td><td>${r.cat<=1?'Sí':'No'}</td></tr>`; }).join('');
   const sinCons=resL.rows.filter(r=>r.cat>1).map(r=>r.code);
-  const sec6=m?`<p>Según la última ronda (ronda ${L+1}), <b>${okN} de ${m}</b> indicadores (${Math.round(okN/m*100)} %) quedaron en MA o BA y se consideran consensuados.</p>
+  const sec6=m?`<p>Según la última ronda con valoraciones (ronda ${L+1}), <b>${okN} de ${m}</b> indicadores (${Math.round(okN/m*100)} %) quedaron en MA o BA y se consideran consensuados.</p>
    <table><tr><th>Código</th><th class="l">Factor</th><th class="l">Indicador</th><th>N − Prm</th><th>Categoría</th><th>¿Consensuado?</th></tr>${indTable}</table>`:'<p class="mut">Sin resultados de indicadores.</p>';
   // 7. conclusiones
   const concl=[]; if(N) concl.push(`El panel quedó conformado por ${inc.length} expertos con competencia alta o media de un total de ${N}.`);
   if(nT) concl.push(`En la encuesta a ${nT} docentes, ${nOk} de ${resE.rows.length} ítems quedan en las categorías S o CS (N = ${f2(resE.N)}).`);
   if(m) concl.push(`En la validación de indicadores, N = ${f2(resL.N)} y ${okN} de ${m} indicadores alcanzan consenso (MA o BA).${sinCons.length?` Sin consenso: ${esc(sinCons.join(', '))}; requieren otra ronda o reformulación.`:' Hay consenso en la totalidad de los indicadores.'}`);
-  if(S.rounds.length>1&&hayR){ const a=roundResult(S.rounds[0]), b=resL; concl.push(`Entre la ronda 1 y la ronda ${L+1}, N pasó de ${f2(a.N)} a ${f2(b.N)}.`); }
+  if(F<L){ const a=roundResult(S.rounds[F]), b=resL; concl.push(`Entre la ronda ${F+1} y la ronda ${L+1}, N pasó de ${f2(a.N)} a ${f2(b.N)}.`); }
   const sim=esSim()?`<div class="note warn"><b>Datos simulados.</b> Este informe se generó con respuestas simuladas para ensayar el procedimiento. No corresponde a un panel real de expertos ni a docentes encuestados.</div>`:'';
   $('t-inf').innerHTML=`<div class="card noprint"><h2>Informe de resultados</h2>
    <p class="mut">Se arma solo con los datos que tengas en las pestañas 1 a 4. Guárdalo como PDF con «Imprimir» (elige «Guardar como PDF») o descárgalo como HTML.</p>
